@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: spendwise-pro
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn yourprojectname.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DEBUG
+        value: False
