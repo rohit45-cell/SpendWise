@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div style="margin-bottom:20px;animation:slideUp 0.4s ease;">
+  <h2 style="font-size:20px;font-weight:800;">Financial Reports</h2>
+  <p style="color:var(--text-muted);font-size:13px;margin-top:2px;">Analyze your spending patterns and trends</p>
+</div>
+
+<!-- Year/Month filter -->
+<div class="filter-bar" style="animation:slideUp 0.4s ease 0.05s backwards;">
+  <form method="get" style="display:contents;">
+    <div class="form-group">
+      <label class="form-label">Year</label>
+      <select name="year" class="form-select">
+        {% for y in years %}
+        <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Month (Category Breakdown)</label>
+      <select name="month" class="form-select">
+        {% for m_num, m_name in months %}
+        <option value="{{ m_num }}" {% if m_num == month %}selected{% endif %}>{{ m_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-self:flex-end;">
+      <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Apply</button>
+      <a href="{% url 'reports' %}" class="btn btn-outline"><i class="fas fa-refresh"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- Yearly Summary Cards -->
+<div class="stats-grid" style="margin-bottom:20px;animation:slideUp 0.4s ease 0.1s backwards;">
+  <div class="stat-card green">
+    <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
+    <div class="stat-label">{{ year }} Total Income</div>
+    <div class="stat-value">{{ currency }}{{ yearly_income|floatformat:0 }}</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+    <div class="stat-label">{{ year }} Total Expenses</div>
+    <div class="stat-value">{{ currency }}{{ yearly_expense|floatformat:0 }}</div>
+  </div>
+  <div class="stat-card {% if yearly_income|floatformat:0 > yearly_expense|floatformat:0 %}blue{% else %}amber{% endif %}">
+    <div class="stat-icon"><i class="fas fa-balance-scale"></i></div>
+    <div class="stat-label">Net Savings {{ year }}</div>
+    <div class="stat-value">{{ currency }}{% widthratio yearly_income 1 1 as yi %}{% widthratio yearly_expense 1 1 as ye %}{{ yearly_income|floatformat:0 }}</div>
+    <div class="stat-sub" style="color:var(--green);">Total Income this year</div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-icon"><i class="fas fa-percent"></i></div>
+    <div class="stat-label">Savings Rate</div>
+    <div class="stat-value">
+      {% if yearly_income > 0 %}
+        {% widthratio yearly_income yearly_income 100 as base %}
+        {{ yearly_income|floatformat:0 }}
+      {% else %}—{% endif %}
+    </div>
+    <div class="stat-sub">Yearly income total</div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-grid" style="animation:slideUp 0.4s ease 0.15s backwards;">
+  <!-- Monthly Bar Chart -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-chart-bar" style="color:var(--blue);"></i>
+        Monthly Overview — {{ year }}
+      </div>
+    </div>
+    <div class="chart-container" style="height:300px;">
+      <canvas id="monthlyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Category Pie -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-chart-pie" style="color:var(--green);"></i>
+        Expense Breakdown — {% for m_num, m_name in months %}{% if m_num == month %}{{ m_name }}{% endif %}{% endfor %}
+      </div>
+    </div>
+    <div class="chart-container" style="height:300px;">
+      <canvas id="catPieChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Monthly Table -->
+<div class="card" style="padding:0;overflow:hidden;animation:slideUp 0.4s ease 0.2s backwards;">
+  <div style="padding:18px 20px 0;">
+    <div class="card-title">
+      <i class="fas fa-table" style="color:var(--blue);"></i>
+      Monthly Breakdown — {{ year }}
+    </div>
+  </div>
+  <div class="table-wrapper" style="margin-top:16px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Income</th>
+          <th>Expenses</th>
+          <th>Net</th>
+          <th>Savings %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in monthly_data_raw %}
+        <tr>
+          <td style="font-weight:700;">{{ row.month }}</td>
+          <td style="color:var(--green);font-weight:600;">{{ currency }}{{ row.income|floatformat:0 }}</td>
+          <td style="color:var(--red);font-weight:600;">{{ currency }}{{ row.expenses|floatformat:0 }}</td>
+          <td>
+            <span style="font-weight:700;color:{% if row.net >= 0 %}var(--green){% else %}var(--red){% endif %};">
+              {% if row.net >= 0 %}+{% endif %}{{ currency }}{{ row.net|floatformat:0 }}
+            </span>
+          </td>
+          <td>
+            {% if row.income > 0 %}
+              {% widthratio row.net row.income 100 as pct %}
+              <span class="badge {% if pct|floatformat:0 >= '0' %}badge-green{% else %}badge-red{% endif %}">{{ pct }}%</span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Category Breakdown Table -->
+{% if cat_breakdown %}
+<div class="card" style="margin-top:16px;animation:slideUp 0.4s ease 0.25s backwards;">
+  <div class="card-title" style="margin-bottom:16px;">
+    <i class="fas fa-tags" style="color:var(--purple);"></i>
+    Category Breakdown — {% for m_num, m_name in months %}{% if m_num == month %}{{ m_name }}{% endif %}{% endfor %} {{ year }}
+  </div>
+  {% for row in cat_breakdown %}
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-light);">
+    <div class="cat-dot" style="background:{{ row.category__color|default:'#6B7280' }};width:12px;height:12px;border-radius:50%;flex-shrink:0;"></div>
+    <span style="flex:1;font-size:13.5px;font-weight:600;">{{ row.category__name|default:"Uncategorized" }}</span>
+    <span style="color:var(--text-muted);font-size:12.5px;">{{ row.count }} tx</span>
+    <span style="font-weight:700;color:var(--red);">{{ currency }}{{ row.total|floatformat:2 }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const monthlyData = {{ monthly_data|safe }};
+const currency = '{{ currency }}';
+const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+
+function getColors() {
+  return {
+    grid: isDark() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+    text: isDark() ? '#94A3B8' : '#64748B',
+    border: isDark() ? '#161B22' : '#ffffff',
+  };
+}
+
+// Monthly Bar Chart
+let monthlyChart;
+function buildMonthlyChart() {
+  const c = getColors();
+  if (monthlyChart) monthlyChart.destroy();
+  monthlyChart = new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+      labels: monthlyData.map(d => d.month),
+      datasets: [
+        { label: 'Income', data: monthlyData.map(d => d.income), backgroundColor: 'rgba(16,185,129,0.8)', borderRadius: 6 },
+        { label: 'Expenses', data: monthlyData.map(d => d.expenses), backgroundColor: 'rgba(239,68,68,0.75)', borderRadius: 6 },
+        { label: 'Net', data: monthlyData.map(d => d.net), type: 'line', borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.4, fill: true, pointBackgroundColor: '#2563EB' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: c.text, font: { family: 'Plus Jakarta Sans', size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ${currency}${ctx.parsed.y.toLocaleString()}` } }
+      },
+      scales: {
+        x: { grid: { color: c.grid }, ticks: { color: c.text } },
+        y: { grid: { color: c.grid }, ticks: { color: c.text, callback: v => currency + v.toLocaleString() } }
+      }
+    }
+  });
+}
+
+// Category Pie
+const catNames = [{% for row in cat_breakdown %}'{{ row.category__name|default:"Uncategorized" }}',{% endfor %}];
+const catValues = [{% for row in cat_breakdown %}{{ row.total }},{% endfor %}];
+const catColors = [{% for row in cat_breakdown %}'{{ row.category__color|default:"#6B7280" }}',{% endfor %}];
+
+let catPieChart;
+function buildCatPie() {
+  const c = getColors();
+  if (catPieChart) catPieChart.destroy();
+  if (catValues.length === 0) {
+    document.getElementById('catPieChart').parentElement.innerHTML = '<div class="empty-state"><i class="fas fa-chart-pie"></i><p>No expense data for this month</p></div>';
+    return;
+  }
+  catPieChart = new Chart(document.getElementById('catPieChart'), {
+    type: 'doughnut',
+    data: { labels: catNames, datasets: [{ data: catValues, backgroundColor: catColors, borderWidth: 3, borderColor: c.border }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: {
+        legend: { position: 'right', labels: { color: c.text, padding: 12, font: { family: 'Plus Jakarta Sans', size: 11 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ` ${currency}${ctx.parsed.toLocaleString()}` } }
+      }
+    }
+  });
+}
+
+buildMonthlyChart();
+buildCatPie();
+
+const observer = new MutationObserver(() => { buildMonthlyChart(); buildCatPie(); });
+observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+</script>
+{% endblock %}

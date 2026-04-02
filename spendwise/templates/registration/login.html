@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — SpendWise Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <!-- Logo -->
+    <div class="auth-logo">
+      <div class="logo-badge"><i class="fas fa-wallet"></i></div>
+      <h1>SpendWise Pro</h1>
+      <p>Smart Money Management</p>
+    </div>
+
+    <h2 class="auth-title">Welcome back 👋</h2>
+    <p class="auth-subtitle">Sign in to your account to continue</p>
+
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-info-circle"></i> {{ message }}
+      </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-user" style="color:var(--blue);margin-right:6px;"></i>Username</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.username.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-lock" style="color:var(--blue);margin-right:6px;"></i>Password</label>
+        <div style="position:relative;">
+          {{ form.password }}
+          <button type="button" onclick="togglePwd(this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        {% if form.password.errors %}
+          <div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.password.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ form.non_field_errors.0 }}
+        </div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary w-100" style="justify-content:center;padding:12px;">
+        <i class="fas fa-sign-in-alt"></i> Sign In
+      </button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <p style="text-align:center;font-size:13.5px;color:var(--text-secondary);">
+      Don't have an account?
+      <a href="{% url 'signup' %}" style="color:var(--blue);font-weight:700;">Create one free →</a>
+    </p>
+  </div>
+</div>
+
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+function togglePwd(btn) {
+  const input = btn.previousElementSibling;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+  } else {
+    input.type = 'password';
+    btn.innerHTML = '<i class="fas fa-eye"></i>';
+  }
+}
+</script>
+</body>
+</html>

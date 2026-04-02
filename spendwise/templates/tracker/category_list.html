@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Categories{% endblock %}
+{% block page_title %}Categories{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;animation:slideUp 0.4s ease;">
+  <div>
+    <h2 style="font-size:20px;font-weight:800;">Categories</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin-top:2px;">Organize your expenses and income</p>
+  </div>
+  <a href="{% url 'add_category' %}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> New Category
+  </a>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
+  {% for cat in categories %}
+  <div class="card" style="padding:18px;animation:slideUp 0.4s ease {{ forloop.counter0|add:'1' }}00ms backwards;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="width:42px;height:42px;border-radius:12px;background:{{ cat.color }}1a;color:{{ cat.color }};display:flex;align-items:center;justify-content:center;font-size:16px;">
+        <i class="fas {{ cat.icon }}"></i>
+      </div>
+      {% if not cat.is_default and cat.user %}
+      <a href="{% url 'delete_category' cat.pk %}" style="color:var(--text-muted);font-size:13px;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-muted)'">
+        <i class="fas fa-trash"></i>
+      </a>
+      {% endif %}
+    </div>
+    <div style="font-size:14px;font-weight:700;color:var(--text-primary);">{{ cat.name }}</div>
+    <div style="margin-top:6px;">
+      <span class="badge {% if cat.category_type == 'expense' %}badge-red{% elif cat.category_type == 'income' %}badge-green{% else %}badge-blue{% endif %}" style="font-size:10.5px;">
+        {{ cat.get_category_type_display }}
+      </span>
+      {% if cat.is_default %}
+      <span class="badge badge-gray" style="font-size:10.5px;margin-left:4px;">Default</span>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div style="grid-column:1/-1;">
+    <div class="empty-state">
+      <i class="fas fa-tags"></i>
+      <h3>No categories</h3>
+      <p>Create categories to organize your finances.</p>
+      <a href="{% url 'add_category' %}" class="btn btn-primary mt-3"><i class="fas fa-plus"></i> Add Category</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

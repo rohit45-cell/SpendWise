@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Delete {{ type }}{% endblock %}
+{% block page_title %}Delete {{ type }}{% endblock %}
+
+{% block content %}
+<div class="delete-card" style="animation:slideUp 0.4s ease;">
+  <div class="card" style="text-align:center;">
+    <div style="width:64px;height:64px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:26px;color:var(--red);">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;">Delete {{ type }}</h2>
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px;">
+      Are you sure you want to delete <strong>{{ obj }}</strong>? This action cannot be undone.
+    </p>
+    <form method="post" style="display:flex;gap:10px;justify-content:center;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">
+        <i class="fas fa-trash"></i> Yes, Delete
+      </button>
+      <a href="javascript:history.back()" class="btn btn-outline">
+        <i class="fas fa-times"></i> Cancel
+      </a>
+    </form>
+  </div>
+</div>
+{% endblock %}

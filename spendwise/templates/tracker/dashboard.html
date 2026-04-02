@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Greeting -->
+<div style="margin-bottom:24px;animation:slideUp 0.4s ease;">
+  <h2 style="font-size:22px;font-weight:800;color:var(--text-primary);">
+    Good {% now "H" as hour %}{% if hour|add:"0" < 12 %}Morning{% elif hour|add:"0" < 17 %}Afternoon{% else %}Evening{% endif %},
+    {{ request.user.first_name|default:request.user.username }} 👋
+  </h2>
+  <p style="color:var(--text-muted);font-size:13.5px;margin-top:4px;">Here's your financial overview for today.</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+  <!-- Balance -->
+  <div class="stat-card {% if balance >= 0 %}blue{% else %}red{% endif %} animate-1">
+    <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+    <div class="stat-label">Net Balance</div>
+    <div class="stat-value" data-count="{{ balance|floatformat:0 }}" data-currency="{{ currency }}">{{ currency }}0</div>
+    <div class="stat-sub">Total income minus expenses</div>
+  </div>
+
+  <!-- Income -->
+  <div class="stat-card green animate-2">
+    <div class="stat-icon"><i class="fas fa-arrow-circle-up"></i></div>
+    <div class="stat-label">Total Income</div>
+    <div class="stat-value" data-count="{{ total_income|floatformat:0 }}" data-currency="{{ currency }}">{{ currency }}0</div>
+    <div class="stat-sub" style="color:var(--green);">This month: {{ currency }}{{ month_income|floatformat:0 }}</div>
+  </div>
+
+  <!-- Expenses -->
+  <div class="stat-card red animate-3">
+    <div class="stat-icon"><i class="fas fa-arrow-circle-down"></i></div>
+    <div class="stat-label">Total Expenses</div>
+    <div class="stat-value" data-count="{{ total_expenses|floatformat:0 }}" data-currency="{{ currency }}">{{ currency }}0</div>
+    <div class="stat-sub" style="color:var(--red);">This month: {{ currency }}{{ month_expenses|floatformat:0 }}</div>
+  </div>
+
+  <!-- Budget -->
+  <div class="stat-card amber animate-4">
+    <div class="stat-icon"><i class="fas fa-bullseye"></i></div>
+    <div class="stat-label">Monthly Budget</div>
+    <div class="stat-value">
+      {% if budget > 0 %}{{ budget_used_pct }}%{% else %}<span style="font-size:16px;color:var(--text-muted);">Not set</span>{% endif %}
+    </div>
+    {% if budget > 0 %}
+    <div class="progress-bar-outer mt-2">
+      <div class="progress-bar-inner {% if budget_used_pct > 85 %}danger{% endif %}" style="width:{{ budget_used_pct }}%;"></div>
+    </div>
+    <div class="stat-sub mt-1">{{ currency }}{{ month_expenses_float|floatformat:0 }} of {{ currency }}{{ budget|floatformat:0 }}</div>
+    {% else %}
+    <div class="stat-sub"><a href="{% url 'profile' %}" style="color:var(--amber);">Set budget →</a></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-grid">
+  <!-- Line/Bar Chart -->
+  <div class="card" style="animation:slideUp 0.5s ease 0.2s backwards;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-chart-bar" style="color:var(--blue);"></i>
+        Income vs Expenses (Last 6 Months)
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="barChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Pie Chart -->
+  <div class="card" style="animation:slideUp 0.5s ease 0.3s backwards;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-chart-pie" style="color:var(--green);"></i>
+        Spending by Category
+      </div>
+    </div>
+    <div class="chart-container" style="height:240px;">
+      <canvas id="pieChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Transactions + Quick Add -->
+<div style="display:grid;grid-template-columns:1fr 340px;gap:16px;flex-wrap:wrap;">
+
+  <!-- Recent Transactions -->
+  <div class="card" style="animation:slideUp 0.5s ease 0.4s backwards;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-clock" style="color:var(--blue);"></i>
+        Recent Transactions
+      </div>
+      <div style="display:flex;gap:8px;">
+        <a href="{% url 'expense_list' %}" class="btn btn-outline btn-sm">View All</a>
+      </div>
+    </div>
+
+    {% if transactions %}
+      {% for tx in transactions %}
+      <div class="transaction-item" style="animation-delay:{{ forloop.counter0 }}00ms;">
+        <div class="tx-icon" style="background:{{ tx.color }}1a;color:{{ tx.color }};">
+          <i class="fas {{ tx.icon }}"></i>
+        </div>
+        <div class="tx-info">
+          <div class="tx-name">{{ tx.label }}</div>
+          <div class="tx-date">
+            {{ tx.date|date:"M d, Y" }}
+            {% if tx.description %} · {{ tx.description|truncatechars:28 }}{% endif %}
+          </div>
+        </div>
+        <div class="tx-amount {{ tx.type }}">
+          {% if tx.type == 'expense' %}−{% else %}+{% endif %}{{ currency }}{{ tx.amount|floatformat:0 }}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-receipt"></i>
+        <h3>No transactions yet</h3>
+        <p>Add your first expense or income to get started.</p>
+        <a href="{% url 'add_expense' %}" class="btn btn-primary mt-3">+ Add Expense</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Quick Actions -->
+  <div>
+    <!-- Quick Add -->
+    <div class="card mb-4" style="animation:slideUp 0.5s ease 0.45s backwards;">
+      <div class="card-title" style="margin-bottom:16px;">
+        <i class="fas fa-zap" style="color:var(--amber);"></i> Quick Actions
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="{% url 'add_expense' %}" class="btn btn-danger w-100" style="justify-content:center;">
+          <i class="fas fa-minus-circle"></i> Add Expense
+        </a>
+        <a href="{% url 'add_income' %}" class="btn btn-success w-100" style="justify-content:center;">
+          <i class="fas fa-plus-circle"></i> Add Income
+        </a>
+        <a href="{% url 'reports' %}" class="btn btn-outline w-100" style="justify-content:center;">
+          <i class="fas fa-chart-line"></i> View Reports
+        </a>
+      </div>
+    </div>
+
+    <!-- Top Categories -->
+    {% if pie_labels %}
+    <div class="card" style="animation:slideUp 0.5s ease 0.5s backwards;">
+      <div class="card-title" style="margin-bottom:16px;">
+        <i class="fas fa-fire" style="color:var(--red);"></i> Top Spending
+      </div>
+      <div id="topCategoryList"></div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+
+const labels = {{ chart_labels|safe }};
+const expenseData = {{ chart_expenses|safe }};
+const incomeData = {{ chart_income|safe }};
+const pieLabels = {{ pie_labels|safe }};
+const pieValues = {{ pie_values|safe }};
+const pieColors = {{ pie_colors|safe }};
+const currency = '{{ currency }}';
+
+// ── Bar/Line Chart ─────────────────────────────────────
+const barCtx = document.getElementById('barChart');
+let barChart;
+
+function buildBarChart() {
+  const gridColor = isDark() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark() ? '#94A3B8' : '#64748B';
+
+  if (barChart) barChart.destroy();
+  barChart = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Income',
+          data: incomeData,
+          backgroundColor: 'rgba(16,185,129,0.8)',
+          borderRadius: 6,
+          borderSkipped: false,
+        },
+        {
+          label: 'Expenses',
+          data: expenseData,
+          backgroundColor: 'rgba(239,68,68,0.75)',
+          borderRadius: 6,
+          borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: textColor, font: { family: 'Plus Jakarta Sans', size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${currency}${ctx.parsed.y.toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: textColor } },
+        y: {
+          grid: { color: gridColor },
+          ticks: { color: textColor, callback: v => currency + v.toLocaleString() }
+        }
+      }
+    }
+  });
+}
+
+// ── Pie Chart ──────────────────────────────────────────
+const pieCtx = document.getElementById('pieChart');
+let pieChart;
+
+function buildPieChart() {
+  const textColor = isDark() ? '#94A3B8' : '#64748B';
+  if (pieChart) pieChart.destroy();
+
+  if (pieValues.length === 0) {
+    pieCtx.parentElement.innerHTML = '<div class="empty-state"><i class="fas fa-chart-pie"></i><p>No expense data</p></div>';
+    return;
+  }
+
+  pieChart = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: { labels: pieLabels, datasets: [{ data: pieValues, backgroundColor: pieColors, borderWidth: 3, borderColor: isDark() ? '#161B22' : '#fff' }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: textColor, padding: 12, font: { family: 'Plus Jakarta Sans', size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ${currency}${ctx.parsed.toLocaleString()}` } }
+      }
+    }
+  });
+}
+
+buildBarChart();
+buildPieChart();
+
+// Rebuild charts on theme change
+const observer = new MutationObserver(() => { buildBarChart(); buildPieChart(); });
+observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// ── Top Category List ──────────────────────────────────
+const listEl = document.getElementById('topCategoryList');
+if (listEl && pieLabels.length) {
+  const maxVal = Math.max(...pieValues);
+  pieLabels.forEach((label, i) => {
+    const pct = maxVal > 0 ? Math.round(pieValues[i] / maxVal * 100) : 0;
+    listEl.innerHTML += `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
+          <span style="font-weight:600;color:var(--text-primary);">${label}</span>
+          <span style="color:var(--text-muted);">${currency}${pieValues[i].toLocaleString()}</span>
+        </div>
+        <div class="progress-bar-outer" style="height:6px;">
+          <div class="progress-bar-inner" style="width:${pct}%;background:${pieColors[i]};"></div>
+        </div>
+      </div>`;
+  });
+}
+</script>
+{% endblock %}

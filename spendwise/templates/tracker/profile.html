@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div style="max-width:680px;margin:0 auto;">
+
+  <!-- Profile Header Card -->
+  <div class="card" style="margin-bottom:16px;animation:slideUp 0.4s ease;padding:28px;">
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--green));display:flex;align-items:center;justify-content:center;color:white;font-family:'Syne',sans-serif;font-size:26px;font-weight:800;overflow:hidden;flex-shrink:0;">
+        {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" style="width:100%;height:100%;object-fit:cover;" alt="avatar" />
+        {% else %}
+          {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+        {% endif %}
+      </div>
+      <div>
+        <h2 style="font-size:22px;font-weight:800;">{{ request.user.get_full_name|default:request.user.username }}</h2>
+        <p style="color:var(--text-muted);font-size:13.5px;">@{{ request.user.username }} · {{ request.user.email }}</p>
+        <p style="color:var(--text-muted);font-size:12px;margin-top:4px;">Member since {{ request.user.date_joined|date:"F Y" }}</p>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:20px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--red);">{{ profile.currency }}{{ total_expenses|floatformat:0 }}</div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Total Spent</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--green);">{{ profile.currency }}{{ total_income|floatformat:0 }}</div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Total Earned</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--blue);">{{ expense_count }}</div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Transactions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Form -->
+  <div class="card" style="animation:slideUp 0.4s ease 0.1s backwards;">
+    <div class="card-title" style="margin-bottom:20px;">
+      <i class="fas fa-edit" style="color:var(--blue);"></i> Edit Profile
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="row">
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" name="first_name" class="form-control" value="{{ request.user.first_name }}">
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" name="last_name" class="form-control" value="{{ request.user.last_name }}">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-envelope" style="color:var(--blue);margin-right:5px;"></i>Email</label>
+        <input type="email" name="email" class="form-control" value="{{ request.user.email }}">
+      </div>
+
+      <div class="row">
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-coins" style="color:var(--amber);margin-right:5px;"></i>Currency Symbol</label>
+            {{ form.currency }}
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-moon" style="color:var(--purple);margin-right:5px;"></i>Default Theme</label>
+            {{ form.theme }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-bullseye" style="color:var(--green);margin-right:5px;"></i>Monthly Budget</label>
+        {{ form.monthly_budget }}
+        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;">Set to 0 to disable budget tracking</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-camera" style="color:var(--blue);margin-right:5px;"></i>Profile Avatar</label>
+        {{ form.avatar }}
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top:8px;">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
+    </form>
+  </div>
+
+  <!-- Change Password -->
+  <div class="card" style="margin-top:16px;animation:slideUp 0.4s ease 0.2s backwards;">
+    <div class="card-title" style="margin-bottom:16px;">
+      <i class="fas fa-lock" style="color:var(--red);"></i> Security
+    </div>
+    <p style="color:var(--text-muted);font-size:13.5px;margin-bottom:14px;">Manage your account password and security settings.</p>
+    <a href="{% url 'password_change' %}" class="btn btn-outline">
+      <i class="fas fa-key"></i> Change Password
+    </a>
+  </div>
+
+</div>
+{% endblock %}

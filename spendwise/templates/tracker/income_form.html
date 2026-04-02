@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div style="max-width:560px;margin:0 auto;animation:slideUp 0.4s ease;">
+  <div style="margin-bottom:20px;">
+    <h2 style="font-size:20px;font-weight:800;">{{ title }}</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin-top:3px;">
+      {% if income %}Update your income record.{% else %}Record a new income source.{% endif %}
+    </p>
+  </div>
+
+  <div class="card">
+    <!-- Amount Preview -->
+    <div style="text-align:center;padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:8px;">Amount</div>
+      <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:var(--green);">
+        {{ profile.currency }}<span id="amountVal">{{ income.amount|default:"0" }}</span>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-coins" style="color:var(--green);margin-right:6px;"></i>Amount *</label>
+        {{ form.amount }}
+        {% if form.amount.errors %}<div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.amount.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-briefcase" style="color:var(--blue);margin-right:6px;"></i>Source *</label>
+        {{ form.source }}
+        {% if form.source.errors %}<div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.source.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-tags" style="color:var(--blue);margin-right:6px;"></i>Category</label>
+        {{ form.category }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-calendar" style="color:var(--blue);margin-right:6px;"></i>Date *</label>
+        {{ form.date }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-sticky-note" style="color:var(--amber);margin-right:6px;"></i>Notes</label>
+        {{ form.description }}
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="submit" class="btn btn-success" style="flex:1;justify-content:center;">
+          <i class="fas fa-save"></i>
+          {% if income %}Update Income{% else %}Save Income{% endif %}
+        </button>
+        <a href="{% url 'income_list' %}" class="btn btn-outline"><i class="fas fa-times"></i> Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+const amountInput = document.querySelector('input[name="amount"]');
+const amountVal = document.getElementById('amountVal');
+if (amountInput && amountVal) {
+  amountInput.addEventListener('input', () => {
+    const v = parseFloat(amountInput.value) || 0;
+    amountVal.textContent = v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  });
+}
+</script>
+{% endblock %}
+{% endblock %}

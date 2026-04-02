@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up — SpendWise Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-card" style="max-width:480px;">
+    <div class="auth-logo">
+      <div class="logo-badge"><i class="fas fa-wallet"></i></div>
+      <h1>SpendWise Pro</h1>
+      <p>Start tracking smarter today</p>
+    </div>
+
+    <h2 class="auth-title">Create your account</h2>
+    <p class="auth-subtitle">Free forever. No credit card required.</p>
+
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> {{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" action="{% url 'signup' %}">
+      {% csrf_token %}
+
+      <div class="row">
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}<div style="color:var(--red);font-size:11px;margin-top:3px;">{{ form.first_name.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            {{ form.last_name }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-user" style="color:var(--blue);margin-right:6px;"></i>Username</label>
+        {{ form.username }}
+        {% if form.username.errors %}<div style="color:var(--red);font-size:11px;margin-top:3px;">{{ form.username.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-envelope" style="color:var(--blue);margin-right:6px;"></i>Email</label>
+        {{ form.email }}
+        {% if form.email.errors %}<div style="color:var(--red);font-size:11px;margin-top:3px;">{{ form.email.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-lock" style="color:var(--blue);margin-right:6px;"></i>Password</label>
+        {{ form.password1 }}
+        {% if form.password1.errors %}<div style="color:var(--red);font-size:11px;margin-top:3px;">{{ form.password1.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-check-circle" style="color:var(--green);margin-right:6px;"></i>Confirm Password</label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}<div style="color:var(--red);font-size:11px;margin-top:3px;">{{ form.password2.errors.0 }}</div>{% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-success w-100" style="justify-content:center;padding:12px;">
+        <i class="fas fa-rocket"></i> Create Free Account
+      </button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <p style="text-align:center;font-size:13.5px;color:var(--text-secondary);">
+      Already have an account?
+      <a href="{% url 'login' %}" style="color:var(--blue);font-weight:700;">Sign in →</a>
+    </p>
+  </div>
+</div>
+<script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

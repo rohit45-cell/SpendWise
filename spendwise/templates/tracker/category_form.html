@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}New Category{% endblock %}
+{% block page_title %}New Category{% endblock %}
+
+{% block content %}
+<div style="max-width:480px;margin:0 auto;animation:slideUp 0.4s ease;">
+  <div style="margin-bottom:20px;">
+    <h2 style="font-size:20px;font-weight:800;">Create Category</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin-top:3px;">Add a custom category for organizing transactions.</p>
+  </div>
+
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-tag" style="color:var(--blue);margin-right:6px;"></i>Name *</label>
+        {{ form.name }}
+        {% if form.name.errors %}<div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.name.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fas fa-icons" style="color:var(--blue);margin-right:6px;"></i>Icon (FontAwesome class)
+        </label>
+        {{ form.icon }}
+        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;">
+          Example: <code>fa-utensils</code>, <code>fa-car</code>, <code>fa-home</code>
+          — <a href="https://fontawesome.com/icons" target="_blank" style="color:var(--blue);">Browse icons</a>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-palette" style="color:var(--blue);margin-right:6px;"></i>Color</label>
+        {{ form.color }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-filter" style="color:var(--blue);margin-right:6px;"></i>Type</label>
+        {{ form.category_type }}
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">
+          <i class="fas fa-save"></i> Create Category
+        </button>
+        <a href="{% url 'category_list' %}" class="btn btn-outline"><i class="fas fa-times"></i> Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
